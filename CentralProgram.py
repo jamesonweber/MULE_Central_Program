@@ -42,11 +42,10 @@ def runServer(host, port, buff):
 	s.listen(1)
 	print("Server Started")
 	conn, addr = s.accept()
-	print("Connection from " + addr)
 	while 1:
 		data = conn.recv(buff)
 		if not data: break
-		print("Received Controls: " + data)
+		print("Received Controls: " + str(data))
 
 	conn.close()
 
