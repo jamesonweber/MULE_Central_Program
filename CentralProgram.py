@@ -25,10 +25,12 @@ import socket
 # Main function definition
 def main():
 	if len(sys.argv) != 3:
-		print("Error parsing commandline arguments")
-		return -1
-	host = sys.argv[1]
-	port = int(sys.argv[2])
+		print("Error parsing commandline arguments, setting connection to defaults")
+		host = "localhost"
+		port = 8888
+	else:
+		host = sys.argv[1]
+		port = int(sys.argv[2])
 	buff = 1024
 	print("Starting Central Program")
 	print("Attempting to open server [" + host + "] at port " + str(port))
