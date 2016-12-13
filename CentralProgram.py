@@ -25,7 +25,7 @@ import socket
 # Main function definition
 def main():
 	if len(sys.argv) != 3:
-		print("Error parsing commandline arguments, setting connection to defaults")
+		print("No connection parameters povided, setting connection to defaults")
 		host = "localhost"
 		port = 8888
 	else:
