@@ -46,8 +46,6 @@ def runServer(host, port, buff):
 	s.listen(0)
 	print("Server Started")
 	camera = PiCamera()
-	camera.start_preview()
-	time.sleep(2)
 	print("PiCamera Initialized")
 	conn = s.accept()[0].makefile('wb')
 	#stream = b"hello world"
