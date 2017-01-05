@@ -58,6 +58,7 @@ def runServer(host, port, buff):
 	#conn.send(stream)
 
 	conn.close()
+	s.close()
 
 
 
