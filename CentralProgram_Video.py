@@ -28,7 +28,7 @@ def main():
 	if len(sys.argv) != 3:
 		print("No connection parameters povided, setting connection to defaults")
 		host = "localhost"
-		port = 8888
+		port = 8080
 	else:
 		host = sys.argv[1]
 		port = int(sys.argv[2])
