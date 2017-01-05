@@ -44,11 +44,13 @@ def runServer(host, port, buff):
 	s.bind((host, port))
 	s.listen(0)
 	print("Server Started")
+	camera = PiCamera()
 	camera.start_preview()
 	time.sleep(2)
+	print("PiCamera Initialized")
 	conn = s.accept()[0].makefile('wb')
 	#stream = b"hello world"
-	camera = PiCamera()
+	
 	camera.resolution = (640, 480)
 	camera.framerate = 30
 	camera.start_recording(conn, format='h264')
