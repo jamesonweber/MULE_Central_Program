@@ -42,18 +42,20 @@ def main():
 def runServer(host, port, buff):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.bind((host, port))
-	s.listen(1)
+	s.listen(0)
 	print("Server Started")
-	conn, addr = s.accept()
-	stream = b"hello world"
-	#camera = PiCamera()
-	#camera.resolution = (640, 480)
-	#camera.start_recording(stream, format='h264', quality=23)
-	#camera.wait_recording(5)
-	#camera.stop_recording()
-	conn.send(stream)
+	conn = s.accept()[0].makefile('wb')
+	#stream = b"hello world"
+	camera = PiCamera()
+	camera.resolution = (640, 480)
+	camera.framerate = 24
+	camera.start_recording(conn, format='h264')
+	camera.wait_recording(30)
+	camera.stop_recording()
+	#conn.send(stream)
 
 	conn.close()
+	s.close()
 
 
 
