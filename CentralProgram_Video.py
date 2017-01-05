@@ -21,7 +21,7 @@
 import socket
 import sys
 from io import BytesIO
-#from picamera import PiCamera
+from picamera import PiCamera
 
 
 def main():
