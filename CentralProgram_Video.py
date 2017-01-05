@@ -20,6 +20,7 @@
 
 import socket
 import sys
+import time
 from io import BytesIO
 from picamera import PiCamera
 
