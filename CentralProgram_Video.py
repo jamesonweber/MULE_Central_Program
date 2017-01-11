@@ -48,9 +48,9 @@ def runServer(host, port):
 	#conn = s.accept()[0].makefile('wb')
 
 	#UDP Code
-	client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	client_socket.connect((host, port))
-	conn = client_socket.makefile('wb')
+	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	s.connect((host, port))
+	conn = s.makefile('wb')
 
 	print("Server Started")
 	camera = PiCamera()
