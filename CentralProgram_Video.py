@@ -42,15 +42,16 @@ def main():
 # Function to deal with client sending information to server
 def runServer(host, port):
 	#TCP Code
-	#s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	#s.bind((host, port))
-	#s.listen(0)
-	#conn = s.accept()[0].makefile('wb')
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.bind((host, port))
+	s.listen(0)
+	conn = s.accept()[0].makefile('wb')
 
 	#UDP Code
-	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-	s.connect((host, port))
-	conn = s.makefile('wb')
+    #Currently does not work. Will use the TCP code for now. To be returned to given time permitted
+	#s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	#s.connect((host, port))
+	#conn = s.makefile('wb')
 
 	print("Server Started")
 	camera = PiCamera()
