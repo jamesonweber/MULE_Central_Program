@@ -37,25 +37,30 @@ def main():
 	print("Starting Central Program Video")
 	print("Attempting to open server [" + host + "] at port " + str(port))
 
-	runServer(host, port, buff)
+	runServer(host, port)
 
 # Function to deal with client sending information to server
-def runServer(host, port, buff):
-	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	s.bind((host, port))
-	s.listen(0)
+def runServer(host, port):
+	#TCP Code
+	#s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	#s.bind((host, port))
+	#s.listen(0)
+	#conn = s.accept()[0].makefile('wb')
+
+	#UDP Code
+	client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	client_socket.connect((host, port))
+	conn = client_socket.makefile('wb')
+
 	print("Server Started")
 	camera = PiCamera()
 	print("PiCamera Initialized")
-	conn = s.accept()[0].makefile('wb')
-	#stream = b"hello world"
 	
 	camera.resolution = (640, 480)
 	camera.framerate = 24
 	camera.start_recording(conn, format='h264', quality=40)
 	camera.wait_recording(30)
 	camera.stop_recording()
-	#conn.send(stream)
 
 	conn.close()
 	s.close()
