@@ -45,7 +45,7 @@ def runServer(host, port, buff):
 	s.listen(1)
 	print("Server Started")
 	conn, addr = s.accept()
-	ser = serial.Serial('/dev/tty.usbserial', 9600)
+	ser = serial.Serial('/dev/ttyUSB0', 115200)
 	print("Controller Ardunio Connected")
 	while 1:
 		data = conn.recv(buff)
