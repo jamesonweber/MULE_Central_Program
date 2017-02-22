@@ -47,14 +47,16 @@ def runServer(host, port, buff):
 	conn, addr = s.accept()
 	ser = serial.Serial('/dev/ttyUSB0', 115200)
 	print("Controller Ardunio Connected")
-	while 1:
-		data = conn.recv(buff)
-		if not data: break
-		print("Received Controls: " + str(data))
-		ser.write(data)
-
-	conn.close()
-
+	try: 
+		while 1:
+			data = conn.recv(buff)
+			if not data: break
+			print("Received Controls: " + str(data))
+			ser.write(data)
+		conn.close()
+	except socket.error, exc:
+		print("Surface Controller Disconnected")
+		conn.close()
 
 
 # Call main function
