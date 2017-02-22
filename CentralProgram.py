@@ -22,6 +22,19 @@
 import sys
 import socket
 import serial
+import threading
+import os
+
+# Multithreading class for running the picamera
+class cameraThread(threading.Thread):
+	def __init__(self, threadID, name):
+		threading.Thread.__init__(self)
+		self.threadID = threadID
+		self.name = name
+	def run(self):
+		print("raspivid -o - -t 0 -hf -w 640 -h 360 -fps 25 | cvlc -vvv stream:///dev/stdin --sout '#rtp{sdp=rtsp://:8554}' :demux=h264")
+		# os.system("raspivid -o - -t 0 -hf -w 640 -h 360 -fps 25 | cvlc -vvv stream:///dev/stdin --sout '#rtp{sdp=rtsp://:8554}' :demux=h264")
+
 
 # Main function definition
 def main():
@@ -35,6 +48,9 @@ def main():
 	buff = 1024
 	print("Starting Central Program")
 	print("Attempting to open server [" + host + "] at port " + str(port))
+
+	ct = cameraThread(1, "cameraThread")
+	ct.start()
 
 	runServer(host, port, buff)
 
@@ -54,7 +70,7 @@ def runServer(host, port, buff):
 			print("Received Controls: " + str(data))
 			ser.write(data)
 		conn.close()
-	except socket.error, exc:
+	except socket.error:
 		print("Surface Controller Disconnected")
 		conn.close()
 
