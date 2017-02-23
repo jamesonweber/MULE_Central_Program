@@ -25,17 +25,16 @@ import serial
 import threading
 import os
 import sys
-import subprocess
 
 # Multithreading class for running the picamera
-#class cameraThread(threading.Thread):
-#	def __init__(self, threadID, name):
-#		threading.Thread.__init__(self)
-#		self.threadID = threadID
-#		self.name = name
-#	def run(self):
-#		print("Starting PiCamera Stream at port 8090")
-#		os.system("raspivid -o - -t 0 -hf -w 640 -h 360 -fps 25|cvlc -vvv stream:///dev/stdin --sout '#standard{access=http,mux=ts,dst=:8090}' :demux=h264")
+class cameraThread(threading.Thread):
+	def __init__(self, threadID, name):
+		threading.Thread.__init__(self)
+		self.threadID = threadID
+		self.name = name
+	def run(self):
+		print("Starting PiCamera Stream at port 8090")
+		os.system("raspivid -o - -t 0 -hf -w 640 -h 360 -fps 25|cvlc -vvv stream:///dev/stdin --sout '#standard{access=http,mux=ts,dst=:8090}' :demux=h264")
 
 
 # Main function definition
@@ -50,13 +49,11 @@ def main():
 	buff = 1024
 	print("Starting Central Program")
 	print("Attempting to open server [" + host + "] at port " + str(port))
-	#ct = cameraThread(1, "cameraThread")
-	#ct.setDaemon(True)
-	#ct.start()
-	ct = subprocess.Popen("raspivid -o - -t 0 -hf -w 640 -h 360 -fps 25|cvlc -vvv stream:///dev/stdin --sout '#standard{access=http,mux=ts,dst=:8090}' :demux=h264")
+	ct = cameraThread(1, "cameraThread")
+	ct.setDaemon(True)
+	ct.start()
 	runServer(host, port, buff)
-	ct.terminate()
-	sys.exit()
+	os._exit(-1)
 
 # Function to deal with client sending information to server
 def runServer(host, port, buff):
