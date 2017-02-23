@@ -52,8 +52,9 @@ def main():
 	ct = cameraThread(1, "cameraThread")
 	ct.setDaemon(True)
 	ct.start()
-	runServer(host, port, buff)
-	os._exit(-1)
+	while 1:
+		runServer(host, port, buff)
+	
 
 # Function to deal with client sending information to server
 def runServer(host, port, buff):
