@@ -53,17 +53,23 @@ def runServer(host, port, buff):
 	conn, addr = s.accept()
 #	ser = serial.Serial('/dev/ttyACM0', 9600)
 	print("Module Arduino Connected")
-	try: 
+	try:
+		initial = conn.recv(buff)
+		print(initial)
+		counter = 0 
 		while 1:
 #			data = ser.readline()
-			data = "DP|MULE|DISTANCE|0x1|1|CM|6.2|1.9|102.6|100,102,101,120,100,100,100,100,100,103"
+			data = "DP|MULE|DISTANCE|0x1|1|CM|6.2|1.9|"
+			data = data + str(counter) + "|100,102,101,120,100,100,100,100,100,103"
 			data = data + "|"
 			data = data + "20.0,-158.0,16.0"
 			data = data + "|"
 			data = data + str(dt.now().strftime('%Y-%m-%d %H:%M:%S'))
-			s.send(data.encode('utf-8'))
+			data = data + '\n'
+			conn.sendall(data.encode('utf-8'))
 			print("Received data: " + str(data))
 			time.sleep(0.1)
+			counter = counter+1
 		conn.close()
 	except Exception as msg:
 		print(msg)
