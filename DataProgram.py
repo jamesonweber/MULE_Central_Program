@@ -41,7 +41,8 @@ def main():
 	buff = 1024
 	print("Starting Data Program")
 	print("Attempting to open server [" + host + "] at port " + str(port))
-	runServer(host, port, buff)
+	while 1:
+		runServer(host, port, buff)
 	
 
 # Function to deal with client sending information to server
