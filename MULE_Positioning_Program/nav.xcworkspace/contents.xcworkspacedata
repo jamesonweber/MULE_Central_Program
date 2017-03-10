@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:IMU1_Settings.ini">
+   </FileRef>
+   <FileRef
+      location = "group:IMU2_Settings.ini">
+   </FileRef>
+   <FileRef
+      location = "group:IMU3_Settings.ini">
+   </FileRef>
+   <FileRef
+      location = "group:nav.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:nav.h">
+   </FileRef>
+   <FileRef
+      location = "group:Calibration.cpp">
+   </FileRef>
+   <FileRef
+      location = "group:/Users/benjaminhilborn/Desktop/nav/Calibration.h">
+   </FileRef>
+   <FileRef
+      location = "group:RTEllipsoidFit">
+   </FileRef>
+   <FileRef
+      location = "group:RTIMULib">
+   </FileRef>
+</Workspace>
