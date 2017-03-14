@@ -27,7 +27,30 @@ import os
 import sys
 from datetime import datetime as dt
 import time
+import threading
 
+# Multithreading class for recieving pos info
+class posThread(threading.Thread):
+	def __init__(self, threadID, name):
+		threading.Thread.__init__(self)
+		self.threadID = threadID
+		self.name = name
+	def run(self):
+		buff = 1024
+		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		s.bind(("127.0.0.1", 8890))
+		s.listen(1)
+		print("Receiving positioning from port 8890")
+		conn, addr = s.accept()
+		try:
+			while 1:
+				data = conn.recv(buff)
+				if not data: break
+				print("Received Position: " + str(data))
+			conn.close()
+		except socket.error:
+			print("Position Server Disconnected")
+			conn.close()
 
 # Main function definition
 def main():
@@ -41,6 +64,9 @@ def main():
 	buff = 1024
 	print("Starting Data Program")
 	print("Attempting to open server [" + host + "] at port " + str(port))
+	pt = posThread(1, "posThread")
+	pt.setDaemon(True)
+	pt.start()
 	while 1:
 		runServer(host, port, buff)
 	
