@@ -18,6 +18,7 @@
 #include <arpa/inet.h>
 #include "RTIMULib/RTIMULib.h"
 #include <iostream>
+#include "SparkFun_MS5803_I2C.h"
 
 int main(void) {
     
