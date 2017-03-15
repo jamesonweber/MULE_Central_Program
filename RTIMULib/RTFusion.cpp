@@ -56,7 +56,7 @@ RTFusion::~RTFusion()
 {
 }
 
-void RTFusion::calculatePose(const RTVector3& accel, const RTVector3& mag, float magDeclination)
+void RTFusion::calculatePose(const RTVector3& accel, const RTVector3& mag, float magDeclination, float magDeclination2)
 {
     RTQuaternion m;
     RTQuaternion q;
@@ -68,7 +68,7 @@ void RTFusion::calculatePose(const RTVector3& accel, const RTVector3& mag, float
         m_measuredPose.setZ(0);
     }
 
-    if (m_enableCompass && m_compassValid) {
+	if (m_enableCompass && m_compassValid && m_compassValid2) {
         q.fromEuler(m_measuredPose);
         m.setScalar(0);
         m.setX(mag.x());
@@ -76,7 +76,9 @@ void RTFusion::calculatePose(const RTVector3& accel, const RTVector3& mag, float
         m.setZ(mag.z());
 
         m = q * m * q.conjugate();
-        m_measuredPose.setZ(-atan2(m.y(), m.x()) - magDeclination);
+
+		float magDec = (magDeclination - magDeclination2) / (RTFLOAT)2.0; //Not sure about this. Should see the difference in declinations
+        m_measuredPose.setZ(-atan2(m.y(), m.x()) - magDec);
     } else {
         m_measuredPose.setZ(m_fusionPose.z());
     }

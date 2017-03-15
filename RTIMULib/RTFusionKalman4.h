@@ -44,7 +44,7 @@ public:
     //  newIMUData() should be called for subsequent updates
     //  deltaTime is in units of seconds
 
-    void newIMUData(RTIMU_DATA& data, const RTIMUSettings *settings);
+	void newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2);
 
     //  the following two functions can be called to customize the covariance matrices
 

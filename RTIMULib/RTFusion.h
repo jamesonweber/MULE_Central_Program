@@ -72,7 +72,7 @@ public:
     void setDebugEnable(bool enable) { m_debug = enable; }
 
 protected:
-    void calculatePose(const RTVector3& accel, const RTVector3& mag, float magDeclination); // generates pose from accels and mag
+    void calculatePose(const RTVector3& accel, const RTVector3& mag, float magDeclination, float magDeclination2); // generates pose from accels and mag
 
     RTVector3 m_gyro;                                       // current gyro sample
     RTVector3 m_accel;                                      // current accel sample
@@ -95,6 +95,7 @@ protected:
     bool m_enableAccel;                                     // enables accel as input
     bool m_enableCompass;                                   // enables compass a input
     bool m_compassValid;                                    // true if compass data valid
+	bool m_compassValid2;
 
     bool m_firstTime;                                       // if first time after reset
     uint64_t m_lastFusionTime;                              // for delta time calculation

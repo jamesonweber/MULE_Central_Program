@@ -82,8 +82,7 @@ void RTFusionKalman4::predict()
     RTFLOAT x2, y2, z2;
 
     //  compute the state transition matrix
-
-    x2 = m_gyro.x() / (RTFLOAT)2.0;
+	x2 = m_gyro.x() / (RTFLOAT)2.0;
     y2 = m_gyro.y() / (RTFLOAT)2.0;
     z2 = m_gyro.z() / (RTFLOAT)2.0;
 
@@ -174,19 +173,40 @@ void RTFusionKalman4::update()
         HAL_INFO(RTMath::display("Cov", m_Pkk));
 }
 
-void RTFusionKalman4::newIMUData(RTIMU_DATA& data, const RTIMUSettings *settings)
+
+void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2)
 {
-    if (m_enableGyro)
-        m_gyro = data.gyro;
+	RTVector3 test_gyro1, test_gyro2, test_accel1, test_accel2, test_compass1, test_compass2;
+	if (m_enableGyro){
+		test_gyro1 = data.gyro;
+		test_gyro2 = data2.gyro;
+		m_gyro.setX((test_gyro1.x() + test_gyro2.x()) / (RTFLOAT)2.0);
+		m_gyro.setY((test_gyro1.y() + test_gyro2.y()) / (RTFLOAT)2.0);
+		m_gyro.setZ((test_gyro1.z() + test_gyro2.z()) / (RTFLOAT)2.0);
+	}
+		
     else
         m_gyro = RTVector3();
-    m_accel = data.accel;
-    m_compass = data.compass;
+
+	test_accel1 = data.accel;
+	test_accel2 = data2.accel;
+	m_accel.setX((test_accel1.x() + test_accel2.x()) / (RTFLOAT)2.0);
+	m_accel.setY((test_accel1.y() + test_accel2.y()) / (RTFLOAT)2.0);
+	m_accel.setZ((test_accel1.z() + test_accel2.z()) / (RTFLOAT)2.0);
+
+	test_compass1 = data.compass;
+	test_compass2 = data2.compass;
+	m_compass.setX((test_compass1.x() + test_compass2.x()) / (RTFLOAT)2.0);
+	m_compass.setY((test_compass1.y() + test_compass2.y()) / (RTFLOAT)2.0);
+	m_compass.setZ((test_compass1.z() + test_compass2.z()) / (RTFLOAT)2.0);
+
+
     m_compassValid = data.compassValid;
+	m_compassValid2 = data2.compassValid;
 
     if (m_firstTime) {
         m_lastFusionTime = data.timestamp;
-        calculatePose(m_accel, m_compass, settings->m_compassAdjDeclination);
+        calculatePose(m_accel, m_compass, settings->m_compassAdjDeclination, settings2->m_compassAdjDeclination);
         m_Fk.fill(0);
 
         //  init covariance matrix to something
@@ -216,7 +236,7 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, const RTIMUSettings *settings
             HAL_INFO1("IMU update delta time: %f\n", m_timeDelta);
         }
 
-        calculatePose(data.accel, data.compass, settings->m_compassAdjDeclination);
+        calculatePose(m_accel, m_compass, settings->m_compassAdjDeclination, settings2->m_compassAdjDeclination);
 
         predict();
         update();
@@ -235,4 +255,5 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, const RTIMUSettings *settings
     data.fusionQPoseValid = true;
     data.fusionPose = m_fusionPose;
     data.fusionQPose = m_fusionQPose;
+
 }
