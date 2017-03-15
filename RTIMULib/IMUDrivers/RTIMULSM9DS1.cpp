@@ -402,7 +402,7 @@ bool RTIMULSM9DS1::IMURead()
 
     //  now update the filter
 
-    updateFusion();
+    //updateFusion();
 
     return true;
 }

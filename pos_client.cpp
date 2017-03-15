@@ -80,7 +80,7 @@ int main(void) {
         
         /* ben code to get pos */
         //this first set takes the measurements from the IMUs and updates imuData privately
-        //This also performs fusion filter processing. We can comment out that line (updateFusion();) in RTIMULSM9DS1.cpp if Nick needs more control
+        //This normally performs fusion filter processing. I've commented out that line (updateFusion();) in RTIMULSM9DS1.cpp so Nick has more control
         imu1->IMURead();
         imu2->IMURead();
         
@@ -90,6 +90,7 @@ int main(void) {
         
         
         /* nick calc code */
+        //Will need to call updateFusion() here somehow
         
         /* convert to string code */
         
