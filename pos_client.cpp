@@ -17,6 +17,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include "RTIMULib/RTIMULib.h"
+#include <iostream>
 
 int main(void) {
     
@@ -74,7 +75,22 @@ int main(void) {
     RTIMU_DATA imuData1;
     RTIMU_DATA imuData2;
     
+    string[] GPS_Data;
+    
     while(1) {
+        //Read from GPS .csv
+        ifstream GPS_Log;
+        GPS_Log.open ("GPS_Log.csv");
+        
+        if (GPS_Log.is_open())
+        {
+            for(int i=0;i<3,i++)
+            {
+                getline(GPS_Log,GPS_Data[i],",");
+            }
+            myfile.close();
+        }
+        
         //slow things down so we're polling at the rate the IMUs enjoy most
         usleep(imu2->IMUGetPollInterval() * 1000);
         
@@ -87,9 +103,12 @@ int main(void) {
         //This second set makes the data available to the user
         imuData1 = imu1->getIMUData();
         imuData2 = imu2->getIMUData();
+
+        //Read from pressure sensor
         
         
         /* nick calc code */
+        //Will have to make use of GPS location here
         //Will need to call updateFusion() here somehow
         
         /* convert to string code */
