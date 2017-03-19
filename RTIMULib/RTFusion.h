@@ -78,6 +78,9 @@ protected:
     RTVector3 m_accel;                                      // current accel sample
     RTVector3 m_compass;                                    // current compass sample
 
+	RTVector3 velocity_ini;
+	RTVector3 position_ini;
+
     RTQuaternion m_measuredQPose;       					// quaternion form of pose from measurement
     RTVector3 m_measuredPose;								// vector form of pose from measurement
     RTQuaternion m_fusionQPose;                             // quaternion form of pose from fusion
@@ -99,6 +102,8 @@ protected:
 
     bool m_firstTime;                                       // if first time after reset
     uint64_t m_lastFusionTime;                              // for delta time calculation
+
+	uint64_t last_time;
 
     static const char *m_fusionNameMap[];                   // the fusion name array
 };

@@ -51,12 +51,16 @@ public:
     void setQMatrix(RTMatrix4x4 Q) {  m_Q = Q; reset();}
     void setRkMatrix(RTMatrix4x4 Rk) { m_Rk = Rk; reset();}
 
+	void LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2);
+
 private:
     void predict();
     void update();
 
     RTVector3 m_gyro;										// unbiased gyro data
     RTFLOAT m_timeDelta;                                    // time between predictions
+	RTVector3 vel_error;
+	RTFLOAT delta_time;
 
     RTQuaternion m_stateQ;									// quaternion state vector
     RTQuaternion m_stateQError;                             // difference between stateQ and measuredQ

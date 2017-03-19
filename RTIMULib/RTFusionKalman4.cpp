@@ -24,6 +24,8 @@
 
 #include "RTFusionKalman4.h"
 #include "RTIMUSettings.h"
+#include "Matrix.h"
+
 
 //  The QVALUE affects the gyro response.
 
@@ -255,5 +257,129 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
     data.fusionQPoseValid = true;
     data.fusionPose = m_fusionPose;
     data.fusionQPose = m_fusionQPose;
+
+}
+
+void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2)
+{
+	// averaging out IMU data
+	RTVector3 test_accel1, test_accel2;
+	test_accel1 = data.accel;
+	test_accel2 = data2.accel;
+	m_accel.setX((test_accel1.x() + test_accel2.x()) / (RTFLOAT)2.0);
+	m_accel.setY((test_accel1.y() + test_accel2.y()) / (RTFLOAT)2.0);
+	m_accel.setZ((test_accel1.z() + test_accel2.z()) / (RTFLOAT)2.0);
+
+	// initializing matrices
+	Matrix x_hat(6, 1);
+	x_hat.clear();
+	Matrix delta(6, 1);
+	for (int i = 0; i < 6; i++){
+		delta.at(i, 0) = 1;
+	}
+	Matrix Cl(9, 9);
+	Cl.clear();
+	Matrix Cx;
+
+
+	if (m_firstTime) {
+		delta_time = data.timestamp;
+		m_firstTime = false;
+		position_ini.setX(0);
+		position_ini.setY(0);
+		position_ini.setZ(0);
+		velocity_ini.setX(0);
+		velocity_ini.setY(0);
+		velocity_ini.setZ(0);
+		Cl.at(3, 3) = 0;
+		Cl.at(4, 4) = 0;
+		Cl.at(5, 5) = 0;
+	}
+	else{
+		delta_time = (RTFLOAT)(data.timestamp - last_time) / (RTFLOAT)1000000;
+		last_time = data.timestamp;
+		Cl.at(3, 3) = vel_error.x();
+		Cl.at(4, 4) = vel_error.y();
+		Cl.at(5, 5) = vel_error.z();
+	}
+
+	for (int i = 0; i < 3; i++){
+		for (int j = 0; j < 3; j++){
+			Cl.at(i, j) = 0.1; //accelerometer error here
+		}
+	}
+
+	for (int i = 6; i < 9; i++){
+		for (int j = 6; j < 9; j++){
+			Cl.at(i, j) = 0.1; //accelerometer error here
+		}
+	}
+
+	double a_post = 1;
+	while (delta.maxAbsElem > 0.0000001){
+		Matrix A(9, 6);
+		A.clear();
+		for (int i = 0; i < 3; i++){
+			for (int j = 0; j < 3; j++){
+				A.at(i, j) = 2 / (delta_time*delta_time);
+			}
+		}
+		for (int i = 3; i < 6; i++){
+			for (int j = 3; j < 6; j++){
+				A.at(i, j) = -1;
+			}
+		}
+
+		for (int i = 3; i < 9; i++){
+			for (int j = 0; j < 6; j++){
+				A.at(i, j) = (1 / delta_time);
+			}
+		}
+
+		Matrix w(9, 1);
+		w.clear();
+		w.at(0, 0) = ((2 * (x_hat.at(0, 0) - velocity_ini.x()*delta_time)) / (delta_time*delta_time)) - m_accel.x();
+		w.at(1, 0) = ((2 * (x_hat.at(1, 0) - velocity_ini.y()*delta_time)) / (delta_time*delta_time)) - m_accel.y();
+		w.at(2, 0) = ((2 * (x_hat.at(2, 0) - velocity_ini.z()*delta_time)) / (delta_time*delta_time)) - m_accel.z();
+		w.at(3, 0) = (((x_hat.at(0, 0) - position_ini.x()) / delta_time) - x_hat.at(3, 0));
+		w.at(4, 0) = (((x_hat.at(1, 0) - position_ini.y()) / delta_time) - x_hat.at(4, 0));
+		w.at(5, 0) = (((x_hat.at(2, 0) - position_ini.z()) / delta_time) - x_hat.at(5, 0));
+		w.at(6, 0) = (((x_hat.at(3, 0) - velocity_ini.x()) / delta_time) - m_accel.x());
+		w.at(7, 0) = (((x_hat.at(4, 0) - velocity_ini.y()) / delta_time) - m_accel.y());
+		w.at(8, 0) = (((x_hat.at(5, 0) - velocity_ini.z()) / delta_time) - m_accel.z());
+
+
+
+		Matrix P(9, 9);
+		P.clear();
+		P = a_post*Cl.inv();
+
+		Matrix N, u;
+		N = A.trans()*P*A;
+		u = A.trans()*P*w;
+
+		delta = -1 * N.inv()*u;
+		x_hat = x_hat + delta;
+		Matrix v;
+		v = A*delta + w;
+
+		//l=l+v????
+		Matrix temp;
+		temp = (v.trans()*P*v) / (9 - 6);
+		a_post = temp.at(0, 0);
+		Cx = a_post*N.inv();
+	}
+
+	x_hat.print_mat("Estimated_observations.txt", 5, 12, "First three values are X, Y, Z position, next three are X, Y, Z for velocity.", " ");
+	position_ini.setX((RTFLOAT)(x_hat.at(0, 0)));
+	position_ini.setY((RTFLOAT)(x_hat.at(1, 0)));
+	position_ini.setZ((RTFLOAT)(x_hat.at(2, 0)));
+	velocity_ini.setX((RTFLOAT)(x_hat.at(3, 0)));
+	velocity_ini.setY((RTFLOAT)(x_hat.at(4, 0)));
+	velocity_ini.setZ((RTFLOAT)(x_hat.at(5, 0)));
+	vel_error.setX((RTFLOAT)(sqrt(Cx.at(3, 3))));
+	vel_error.setY((RTFLOAT)(sqrt(Cx.at(4, 4))));
+	vel_error.setZ((RTFLOAT)(sqrt(Cx.at(5, 5))));
+
 
 }
