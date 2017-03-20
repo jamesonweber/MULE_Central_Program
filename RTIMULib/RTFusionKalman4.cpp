@@ -210,7 +210,7 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
 
     if (m_firstTime) {
         m_lastFusionTime = data.timestamp;
-        calculatePose(m_accel, m_compass, settings->m_compassAdjDeclination, settings2->m_compassAdjDeclination);
+        calculatePose(m_accel, m_compass, settings->m_compassAdjDeclination);
         m_Fk.fill(0);
 
         //  init covariance matrix to something
@@ -240,7 +240,7 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
             HAL_INFO1("IMU update delta time: %f\n", m_timeDelta);
         }
 
-        calculatePose(m_accel, m_compass, settings->m_compassAdjDeclination, settings2->m_compassAdjDeclination);
+        calculatePose(m_accel, m_compass, settings->m_compassAdjDeclination);
 
         predict();
         update();
