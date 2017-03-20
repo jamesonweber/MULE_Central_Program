@@ -372,7 +372,7 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 		Cx = a_post*N.i();
 	}
 
-	x_hat.print_mat("Estimated_observations.txt", 5, 12, "First three values are X, Y, Z position, next three are X, Y, Z for velocity.", " ");
+	//x_hat.print_mat("Estimated_observations.txt", 5, 12, "First three values are X, Y, Z position, next three are X, Y, Z for velocity.", " ");
 	position_ini.setX((RTFLOAT)(x_hat(0, 0)));
 	position_ini.setY((RTFLOAT)(x_hat(1, 0)));
 	position_ini.setZ((RTFLOAT)(x_hat(2, 0)));
