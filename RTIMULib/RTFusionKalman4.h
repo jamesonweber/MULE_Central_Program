@@ -26,6 +26,7 @@
 #define	_RTFUSIONKALMAN4_H
 
 #include "RTFusion.h"
+#include <armadillo>
 
 class RTFusionKalman4 : public RTFusion
 {

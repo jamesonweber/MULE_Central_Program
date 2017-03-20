@@ -24,7 +24,7 @@
 
 #include "RTFusionKalman4.h"
 #include "RTIMUSettings.h"
-#include "Matrix.h"
+#include <armadillo>
 
 
 //  The QVALUE affects the gyro response.
@@ -271,16 +271,16 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 	m_accel.setZ((test_accel1.z() + test_accel2.z()) / (RTFLOAT)2.0);
 
 	// initializing matrices
-	Matrix x_hat;
+	mat x_hat;
 	x_hat.zeros(6, 1);
-	Matrix delta;
+	mat delta;
 	delta.zeros(6, 1);
 	for (int i = 0; i < 6; i++){
 		delta(i, 0) = 1;
 	}
-	Matrix Cl;
+	mat Cl;
 	Cl.zeros(9, 9);
-	Matrix Cx;
+	mat Cx;
 	
 
 
@@ -319,7 +319,7 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 
 	double a_post = 1;
 	while (delta.max() > 0.0000001){
-		Matrix A;
+		mat A;
 		A.zeros(9, 6);
 		for (int i = 0; i < 3; i++){
 			for (int j = 0; j < 3; j++){
@@ -338,7 +338,7 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 			}
 		}
 
-		Matrix w;
+		mat w;
 		w.zeros(9, 1);
 		w(0, 0) = ((2 * (x_hat(0, 0) - velocity_ini.x()*delta_time)) / (delta_time*delta_time)) - m_accel.x();
 		w(1, 0) = ((2 * (x_hat(1, 0) - velocity_ini.y()*delta_time)) / (delta_time*delta_time)) - m_accel.y();
@@ -352,21 +352,21 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 
 
 
-		Matrix P;
+		mat P;
 		P.zeros(9, 9);
 		P = a_post*Cl.i();
 
-		Matrix N, u;
+		mat N, u;
 		N = A.t()*P*A;
 		u = A.t()*P*w;
 
 		delta = -1 * N.i()*u;
 		x_hat = x_hat + delta;
-		Matrix v;
+		mat v;
 		v = A*delta + w;
 
 		//l=l+v????
-		Matrix temp;
+		mat temp;
 		temp = (v.t()*P*v) / (9 - 6);
 		a_post = temp(0, 0);
 		Cx = a_post*N.i();
