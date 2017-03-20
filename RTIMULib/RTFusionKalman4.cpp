@@ -26,6 +26,8 @@
 #include "RTIMUSettings.h"
 #include <armadillo>
 
+using namespace std;
+using namespace arma;
 
 //  The QVALUE affects the gyro response.
 
