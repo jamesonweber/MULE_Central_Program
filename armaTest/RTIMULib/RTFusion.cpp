@@ -47,7 +47,7 @@ RTFusion::RTFusion()
     m_gravity.setScalar(0);
     m_gravity.setX(0);
     m_gravity.setY(0);
-    m_gravity.setZ(1);
+    m_gravity.setZ(9.81);
 
     m_slerpPower = RTQF_SLERP_POWER;
 }
@@ -110,6 +110,8 @@ void RTFusion::calculatePose(const RTVector3& accel, const RTVector3& mag, float
         m_measuredQPose.toEuler(m_measuredPose);
     }
 }
+
+
 
 
 RTVector3 RTFusion::getAccelResiduals()

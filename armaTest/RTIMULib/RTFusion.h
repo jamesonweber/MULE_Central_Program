@@ -67,7 +67,7 @@ public:
 
     //  getAccelResiduals() gets the residual after subtracting gravity
 
-    RTVector3 getAccelResiduals();
+	RTVector3 getAccelResiduals();
 
     void setDebugEnable(bool enable) { m_debug = enable; }
 
@@ -77,6 +77,7 @@ protected:
     RTVector3 m_gyro;                                       // current gyro sample
     RTVector3 m_accel;                                      // current accel sample
     RTVector3 m_compass;                                    // current compass sample
+	RTVector3 position_final;
 
 	RTVector3 velocity_ini;
 	RTVector3 position_ini;

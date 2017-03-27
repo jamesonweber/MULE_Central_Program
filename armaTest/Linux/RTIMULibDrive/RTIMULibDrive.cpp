@@ -76,6 +76,8 @@ int main()
     rateTimer = displayTimer = RTMath::currentUSecsSinceEpoch();
 
     //  now just process data
+    RTFusionKalman4 * fusion = new RTFusionKalman4;
+
 
     while (1) {
         //  poll at the rate recommended by the IMU
@@ -97,8 +99,10 @@ int main()
 //                displayTimer = now;
 //            }
             
-               RTFusionKalman4 * fusion = new RTFusionKalman4;
-               fusion->LSE(imuData1, imuData2, settings1, settings2);
+			   //RTVector3 accel_resid1= imu1->getAccelResiduals();
+			   //RTVector3 accel_resid2= imu2->getAccelResiduals();
+			   fusion->newIMUData(imuData1, imuData2, settings1);
+               //fusion->LSE(imuData1, imuData2, accel_resid1, accel_resid2);
             fflush(stdout);
            }
 

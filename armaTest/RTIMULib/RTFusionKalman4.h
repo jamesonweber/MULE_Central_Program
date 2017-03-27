@@ -45,14 +45,14 @@ public:
     //  newIMUData() should be called for subsequent updates
     //  deltaTime is in units of seconds
 
-	void newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2);
+	void newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings);
 
     //  the following two functions can be called to customize the covariance matrices
 
     void setQMatrix(RTMatrix4x4 Q) {  m_Q = Q; reset();}
     void setRkMatrix(RTMatrix4x4 Rk) { m_Rk = Rk; reset();}
 
-	void LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2);
+	void LSE(RTIMU_DATA& data, RTIMU_DATA& data2, RTVector3 accel_resid, RTVector3 accel_resid2);
 
 private:
     void predict();

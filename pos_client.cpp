@@ -51,6 +51,7 @@ int main(void) {
     RTIMU *imu1 = RTIMU::createIMU(settings1);
     RTIMU *imu2 = RTIMU::createIMU(settings2);
     
+	RTVector3 accel_resid=imu1->getAccelResiduals();
     if ((imu1 == NULL) || (imu1->IMUType() == RTIMU_TYPE_NULL)) {
         printf("No IMU1 found\n");
         exit(1);

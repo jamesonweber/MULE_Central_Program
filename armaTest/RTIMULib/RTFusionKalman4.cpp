@@ -178,37 +178,70 @@ void RTFusionKalman4::update()
 }
 
 
-void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2)
+void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings)
 {
+	cout<<"I reset!!!" <<endl;
 	RTVector3 test_gyro1, test_gyro2, test_accel1, test_accel2, test_compass1, test_compass2;
 	if (m_enableGyro){
 		test_gyro1 = data.gyro;
 		test_gyro2 = data2.gyro;
-		m_gyro.setX((test_gyro1.x() + test_gyro2.x()) / (RTFLOAT)2.0);
-		m_gyro.setY((test_gyro1.y() + test_gyro2.y()) / (RTFLOAT)2.0);
-		m_gyro.setZ((test_gyro1.z() + test_gyro2.z()) / (RTFLOAT)2.0);
+		//m_gyro.setX((test_gyro1.x() + test_gyro2.x()) / (RTFLOAT)2.0);
+		//m_gyro.setY((test_gyro1.y() + test_gyro2.y()) / (RTFLOAT)2.0);
+		//m_gyro.setZ((test_gyro1.z() + test_gyro2.z()) / (RTFLOAT)2.0);
+		m_gyro=data.gyro;
 	}
-		
-    else
+    else{
         m_gyro = RTVector3();
+	}
+
+	
 
 	test_accel1 = data.accel;
 	test_accel2 = data2.accel;
-	m_accel.setX((test_accel1.x() + test_accel2.x()) / (RTFLOAT)2.0);
-	m_accel.setY((test_accel1.y() + test_accel2.y()) / (RTFLOAT)2.0);
-	m_accel.setZ((test_accel1.z() + test_accel2.z()) / (RTFLOAT)2.0);
+	cout<<"x accel 1: "<<test_accel1.x()<<endl;
+	cout<<"y accel 1: "<<test_accel1.y()<<endl;
+	cout<<"z accel 1: "<<test_accel1.z()<<endl;
+	
+	cout<<"x accel 2: "<<test_accel2.x()<<endl;
+	cout<<"y accel 2: "<<test_accel2.y()<<endl;
+	cout<<"z accel 2: "<<test_accel2.z()<<endl;
+	
+	//m_accel.setX((test_accel1.x() + test_accel2.x()) / (RTFLOAT)2.0);
+	//m_accel.setY((test_accel1.y() + test_accel2.y()) / (RTFLOAT)2.0);
+	//m_accel.setZ((test_accel1.z() + test_accel2.z()) / (RTFLOAT)2.0);
+	m_accel=data.accel;
 
 	test_compass1 = data.compass;
 	test_compass2 = data2.compass;
-	m_compass.setX((test_compass1.x() + test_compass2.x()) / (RTFLOAT)2.0);
-	m_compass.setY((test_compass1.y() + test_compass2.y()) / (RTFLOAT)2.0);
-	m_compass.setZ((test_compass1.z() + test_compass2.z()) / (RTFLOAT)2.0);
-
+	//m_compass.setX((test_compass1.x() + test_compass2.x()) / (RTFLOAT)2.0);
+	//m_compass.setY((test_compass1.y() + test_compass2.y()) / (RTFLOAT)2.0);
+	//m_compass.setZ((test_compass1.z() + test_compass2.z()) / (RTFLOAT)2.0);
+	m_compass=data.compass;
+	
 
     m_compassValid = data.compassValid;
 	m_compassValid2 = data2.compassValid;
 
+	mat Cl;
+	Cl.zeros(9, 9);
+	
     if (m_firstTime) {
+		position_ini.setX(0);
+		position_ini.setY(0);
+		position_ini.setZ(0);
+		velocity_ini.setX(0);
+		velocity_ini.setY(0);
+		velocity_ini.setZ(0);
+		position_final.setX(0);
+		position_final.setY(0);
+		position_final.setZ(0);
+		
+		Cl(3, 3) = 0;
+		Cl(4, 4) = 0;
+		Cl(5, 5) = 0;
+		cout<<"IT was false! x pos is: "<<position_ini.x()<<endl;
+		//cout<<"IT was false! y pos is: "<<position_ini.y()<<endl;
+		//cout<<"IT was false! z pos is: "<<position_ini.z()<<endl;
         m_lastFusionTime = data.timestamp;
         calculatePose(m_accel, m_compass, settings->m_compassAdjDeclination);
         m_Fk.fill(0);
@@ -230,6 +263,12 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
         m_fusionPose = m_measuredPose;
         m_firstTime = false;
     } else {
+		delta_time = (RTFLOAT)(data.timestamp/(RTFLOAT)1000000 - last_time) / (RTFLOAT)1000000;
+		last_time = data.timestamp/(RTFLOAT)10000000;
+		Cl(3, 3) = vel_error.x();
+		Cl(4, 4) = vel_error.y();
+		Cl(5, 5) = vel_error.z();
+		
         m_timeDelta = (RTFLOAT)(data.timestamp - m_lastFusionTime) / (RTFLOAT)1000000;
         m_lastFusionTime = data.timestamp;
         if (m_timeDelta <= 0)
@@ -259,18 +298,86 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
     data.fusionQPoseValid = true;
     data.fusionPose = m_fusionPose;
     data.fusionQPose = m_fusionQPose;
+	
+	
+	////////////////// Acceleration residuals ////////////////////////////////////
+	RTQuaternion rotatedGravity;
+    RTQuaternion fusedConjugate;
+    RTQuaternion qTemp;
+    RTVector3 residuals;
 
-}
+    //  do gravity rotation and subtraction
 
-void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2)
-{
+    // create the conjugate of the pose
+
+    fusedConjugate = m_fusionQPose.conjugate();
+
+    // now do the rotation - takes two steps with qTemp as the intermediate variable
+
+    qTemp = m_gravity * m_fusionQPose;
+    rotatedGravity = fusedConjugate * qTemp;
+
+    // now adjust the measured accel and change the signs to make sense
+
+    residuals.setX(-(m_accel.x() - rotatedGravity.x()));
+    residuals.setY(-(m_accel.y() - rotatedGravity.y()));
+    residuals.setZ(-(m_accel.z() - rotatedGravity.z()));
+	
+	//////////////////Acceleration Residuals 2
+/* 	RTQuaternion rotatedGravity2;
+    RTQuaternion fusedConjugate2;
+    RTQuaternion qTemp2;
+    RTVector3 residuals2;
+
+    //  do gravity rotation and subtraction
+
+    // create the conjugate of the pose
+
+    fusedConjugate = m_fusionQPose.conjugate();
+
+    // now do the rotation - takes two steps with qTemp as the intermediate variable
+
+    qTemp = m_gravity * m_fusionQPose;
+    rotatedGravity = fusedConjugate * qTemp;
+
+    // now adjust the measured accel and change the signs to make sense
+
+    residuals.setX(-(m_accel.x() - rotatedGravity.x()));
+    residuals.setY(-(m_accel.y() - rotatedGravity.y()));
+    residuals.setZ(-(m_accel.z() - rotatedGravity.z())); */
+	
+	/////////////////////LSE///////////////////////////////////////////
+	
+	
 	// averaging out IMU data
-	RTVector3 test_accel1, test_accel2;
-	test_accel1 = data.accel;
-	test_accel2 = data2.accel;
-	m_accel.setX((test_accel1.x() + test_accel2.x()) / (RTFLOAT)2.0);
-	m_accel.setY((test_accel1.y() + test_accel2.y()) / (RTFLOAT)2.0);
-	m_accel.setZ((test_accel1.z() + test_accel2.z()) / (RTFLOAT)2.0);
+	//RTVector3 test_accel1, test_accel2;
+	//test_accel1 = data.accel;
+	//test_accel2 = data2.accel;
+	m_accel = data.accel;
+	
+	// cout<<"X acceleration is in Gs: "<<m_accel.x()<<endl;
+	// cout<<"Y acceleration is in Gs: "<<m_accel.y()<<endl;
+	// cout<<"Z acceleration is in Gs: "<<m_accel.z()<<endl;
+	
+
+	m_accel.setX(m_accel.x()*(RTFLOAT)9.81);
+	m_accel.setY(m_accel.y()*(RTFLOAT)9.81);
+	m_accel.setZ(m_accel.z()*(RTFLOAT)9.81);
+	
+	// cout<<"X acceleration is in m/s2: "<<m_accel.x()<<endl;
+	// cout<<"Y acceleration is in m/s2: "<<m_accel.y()<<endl;
+	// cout<<"Z acceleration is in m/s2: "<<m_accel.z()<<endl;
+	
+	m_accel.setX(m_accel.x()-residuals.x());
+	m_accel.setY(m_accel.y()-residuals.y());
+	m_accel.setZ(m_accel.z()-residuals.z());
+	
+	//double test1;
+	//test1=m_accel.x();
+	
+	// m_accel.setX((test_accel1.x() + test_accel2.x()) / (RTFLOAT)2.0);
+	// m_accel.setY((test_accel1.y() + test_accel2.y()) / (RTFLOAT)2.0);
+	// m_accel.setZ((test_accel1.z() + test_accel2.z()) / (RTFLOAT)2.0);
 
 	// initializing matrices
 	mat x_hat;
@@ -280,32 +387,9 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 	for (int i = 0; i < 6; i++){
 		delta(i, 0) = 1;
 	}
-	mat Cl;
-	Cl.zeros(9, 9);
+	
 	mat Cx;
 	
-
-
-	if (m_firstTime) {
-		delta_time = data.timestamp;
-		m_firstTime = false;
-		position_ini.setX(0);
-		position_ini.setY(0);
-		position_ini.setZ(0);
-		velocity_ini.setX(0);
-		velocity_ini.setY(0);
-		velocity_ini.setZ(0);
-		Cl(3, 3) = 0;
-		Cl(4, 4) = 0;
-		Cl(5, 5) = 0;
-	}
-	else{
-		delta_time = (RTFLOAT)(data.timestamp - last_time) / (RTFLOAT)1000000;
-		last_time = data.timestamp;
-		Cl(3, 3) = vel_error.x();
-		Cl(4, 4) = vel_error.y();
-		Cl(5, 5) = vel_error.z();
-	}
 
 	for (int i = 0; i < 3; i++){
 		for (int j = 0; j < 3; j++){
@@ -320,24 +404,26 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 	}
 
 	double a_post = 1;
-	while (delta.max() > 0.0000001){
+	//while (delta.max() > 0.0000001){
+    for(int iter=0; iter<10;iter++){
 		mat A;
 		A.zeros(9, 6);
 		for (int i = 0; i < 3; i++){
-			for (int j = 0; j < 3; j++){
-				A(i, j) = 2 / (delta_time*delta_time);
-			}
-		}
+            //cout << delta_time << endl;
+            delta_time = delta_time - 1;
+            A(i, i) = 2 / (delta_time);
+            sleep(0.1);
+        }
+        
 		for (int i = 3; i < 6; i++){
-			for (int j = 3; j < 6; j++){
-				A(i, j) = -1;
-			}
+            A(i,i)=-1;
 		}
 
 		for (int i = 3; i < 9; i++){
-			for (int j = 0; j < 6; j++){
-				A(i, j) = (1 / delta_time);
-			}
+           // cout << delta_time << endl;
+            delta_time = delta_time - 1;
+            A(i,i-3)=(1 / delta_time);
+            sleep(0.1);
 		}
 
 		mat w;
@@ -356,16 +442,26 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 
 		mat P;
 		P.zeros(9, 9);
-		P = a_post*Cl.i();
-
+		//P = a_post*Cl.i();
+        
 		mat N, u;
-		N = A.t()*P*A;
-		u = A.t()*P*w;
-
+		N = A.t()*A;
+		u = A.t()*w;
+        
+        // cout<<"N is: "<<endl<<N<<endl;
+        // cout<<"A is: "<<endl<<A<<endl;
+        // cout<<"u is: "<<endl<<u<<endl;
+        // cout<<"w is: "<<endl<<w<<endl;
+        
+        
+        
 		delta = -1 * N.i()*u;
+        // cout<<"Delta is: "<<endl<<delta<<endl;
 		x_hat = x_hat + delta;
+		
 		mat v;
 		v = A*delta + w;
+		
 
 		//l=l+v????
 		mat temp;
@@ -374,7 +470,204 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 		Cx = a_post*N.i();
 	}
 
-	//x_hat.print_mat("Estimated_observations.txt", 5, 12, "First three values are X, Y, Z position, next three are X, Y, Z for velocity.", " ");
+	x_hat(0,0)=x_hat(0,0)/delta_time;
+	x_hat(1,0)=x_hat(1,0)/delta_time;
+	x_hat(2,0)=x_hat(2,0)/delta_time;
+	
+	position_ini.setX(x_hat(0, 0));
+	position_ini.setY(x_hat(1, 0));
+	position_ini.setZ((x_hat(2, 0)));
+	velocity_ini.setX(velocity_ini.x()+(RTFLOAT)(x_hat(3, 0)));
+	velocity_ini.setY(velocity_ini.y()+(RTFLOAT)(x_hat(4, 0)));
+	velocity_ini.setZ(velocity_ini.z()+(RTFLOAT)(x_hat(5, 0)));
+	vel_error.setX((RTFLOAT)(sqrt(Cx(3, 3))));
+	vel_error.setY((RTFLOAT)(sqrt(Cx(4, 4))));
+	vel_error.setZ((RTFLOAT)(sqrt(Cx(5, 5))));
+	
+	position_final.setX(position_final.x()+x_hat(0,0));
+	position_final.setY(position_final.y()+x_hat(1,0)-6);
+	position_final.setZ(position_final.z()+x_hat(2,0)+1.3);
+	
+	
+	
+	
+   // cout<<"final estimate is : "<<endl<<x_hat<<endl;
+	//cout<<"delta time is: "<<endl<<delta_time<<endl;
+	
+	cout<<"New final estimate is : "<<endl<<x_hat<<endl;
+	// cout<<"X acceleration is in m/s2: "<<m_accel.x()<<endl;
+	// cout<<"Y acceleration is in m/s2: "<<m_accel.y()<<endl;
+	// cout<<"Z acceleration is in m/s2: "<<m_accel.z()<<endl;
+    // cout<<"X Accel residuals is: "<<residuals.x()<<endl;
+	// cout<<"Y Accel residuals is: "<<residuals.y()<<endl;
+	// cout<<"Z Accel residuals is: "<<residuals.z()<<endl;
+	
+	// cout<<"test x acceleration is in m/s2: "<<m_fusionQPose.x()<<endl;
+	// cout<<"test Y acceleration is in m/s2: "<<m_fusionQPose.y()<<endl;
+	// cout<<"test Z acceleration is in m/s2: "<<m_fusionQPose.z()<<endl;
+	// cout<<"Test time is: "<<time(0)<<endl<<endl;
+
+	// cout<<"x Gravity is: " <<m_gravity.x()<<endl;
+	// cout<<"y Gravity is: " <<m_gravity.y()<<endl;
+	// cout<<"z Gravity is: " <<m_gravity.z()<<endl;
+	cout<<"x position ini is: "<<position_ini.x()<<endl;
+	cout<<"y position ini is: "<<position_ini.y()<<endl;
+	cout<<"z position ini is: "<<position_ini.z()<<endl;
+	
+	cout<<"x position final is: "<<position_final.x()<<endl;
+	cout<<"y position final is: "<<position_final.y()<<endl;
+	cout<<"z position final is: "<<position_final.z()<<endl;
+	
+	sleep(3);
+
+
+}
+
+void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, RTVector3 accel_resid1, RTVector3 accel_resid2)
+{
+	// averaging out IMU data
+	RTVector3 test_accel1, test_accel2;
+	test_accel1 = data.accel;
+	test_accel2 = data2.accel;
+	m_accel = data.accel;
+	cout<<"X acceleration is in Gs: "<<m_accel.x()<<endl;
+	cout<<"Y acceleration is in Gs: "<<m_accel.y()<<endl;
+	cout<<"Z acceleration is in Gs: "<<m_accel.z()<<endl;
+	
+
+	m_accel.setX(m_accel.x()*(RTFLOAT)9.81);
+	m_accel.setY(m_accel.y()*(RTFLOAT)9.81);
+	m_accel.setZ(m_accel.z()*(RTFLOAT)9.81);
+	
+	cout<<"X acceleration is in m/s2: "<<m_accel.x()<<endl;
+	cout<<"Y acceleration is in m/s2: "<<m_accel.y()<<endl;
+	cout<<"Z acceleration is in m/s2: "<<m_accel.z()<<endl;
+	
+    //RTVector3 getAccelResiduals() { return m_fusion->getAccelResiduals(); }
+	
+	
+	double test1;
+	test1=m_accel.x();
+	cout<<"x accel is: "<<test1<<endl;
+	// m_accel.setX((test_accel1.x() + test_accel2.x()) / (RTFLOAT)2.0);
+	// m_accel.setY((test_accel1.y() + test_accel2.y()) / (RTFLOAT)2.0);
+	// m_accel.setZ((test_accel1.z() + test_accel2.z()) / (RTFLOAT)2.0);
+
+	// initializing matrices
+	mat x_hat;
+	x_hat.zeros(6, 1);
+	mat delta;
+	delta.zeros(6, 1);
+	for (int i = 0; i < 6; i++){
+		delta(i, 0) = 1;
+	}
+	mat Cl;
+	Cl.zeros(9, 9);
+	mat Cx;
+	
+
+
+	if (m_firstTime) {
+		delta_time = data.timestamp/(RTFLOAT)1000000;
+        last_time=delta_time;
+		m_firstTime = false;
+		position_ini.setX(0);
+		position_ini.setY(0);
+		position_ini.setZ(0);
+		velocity_ini.setX(0);
+		velocity_ini.setY(0);
+		velocity_ini.setZ(0);
+		Cl(3, 3) = 0;
+		Cl(4, 4) = 0;
+		Cl(5, 5) = 0;
+	}
+	else{
+		delta_time = (RTFLOAT)(data.timestamp/(RTFLOAT)1000000 - last_time) / (RTFLOAT)1000000;
+		last_time = data.timestamp/(RTFLOAT)10000000;
+		Cl(3, 3) = vel_error.x();
+		Cl(4, 4) = vel_error.y();
+		Cl(5, 5) = vel_error.z();
+	}
+
+	for (int i = 0; i < 3; i++){
+		for (int j = 0; j < 3; j++){
+			Cl(i, j) = 0.1; //accelerometer error here
+		}
+	}
+
+	for (int i = 6; i < 9; i++){
+		for (int j = 6; j < 9; j++){
+			Cl(i, j) = 0.1; //accelerometer error here
+		}
+	}
+
+	double a_post = 1;
+	//while (delta.max() > 0.0000001){
+    for(int iter=0; iter<10;iter++){
+		mat A;
+		A.zeros(9, 6);
+		for (int i = 0; i < 3; i++){
+            cout << delta_time << endl;
+            delta_time = delta_time - 1;
+            A(i, i) = 2 / (delta_time);
+            sleep(0.1);
+        }
+        
+		for (int i = 3; i < 6; i++){
+            A(i,i)=-1;
+		}
+
+		for (int i = 3; i < 9; i++){
+            cout << delta_time << endl;
+            delta_time = delta_time - 1;
+            A(i,i-3)=(1 / delta_time);
+            sleep(0.1);
+		}
+
+		mat w;
+		w.zeros(9, 1);
+		w(0, 0) = ((2 * (x_hat(0, 0) - velocity_ini.x()*delta_time)) / (delta_time*delta_time)) - m_accel.x();
+		w(1, 0) = ((2 * (x_hat(1, 0) - velocity_ini.y()*delta_time)) / (delta_time*delta_time)) - m_accel.y();
+		w(2, 0) = ((2 * (x_hat(2, 0) - velocity_ini.z()*delta_time)) / (delta_time*delta_time)) - m_accel.z();
+		w(3, 0) = (((x_hat(0, 0) - position_ini.x()) / delta_time) - x_hat(3, 0));
+		w(4, 0) = (((x_hat(1, 0) - position_ini.y()) / delta_time) - x_hat(4, 0));
+		w(5, 0) = (((x_hat(2, 0) - position_ini.z()) / delta_time) - x_hat(5, 0));
+		w(6, 0) = (((x_hat(3, 0) - velocity_ini.x()) / delta_time) - m_accel.x());
+		w(7, 0) = (((x_hat(4, 0) - velocity_ini.y()) / delta_time) - m_accel.y());
+		w(8, 0) = (((x_hat(5, 0) - velocity_ini.z()) / delta_time) - m_accel.z());
+
+
+
+		mat P;
+		P.zeros(9, 9);
+		//P = a_post*Cl.i();
+        
+		mat N, u;
+		N = A.t()*A;
+		u = A.t()*w;
+        
+        cout<<"N is: "<<endl<<N<<endl;
+        cout<<"A is: "<<endl<<A<<endl;
+        cout<<"u is: "<<endl<<u<<endl;
+        cout<<"w is: "<<endl<<w<<endl;
+        
+        
+        
+		delta = -1 * N.i()*u;
+        cout<<"Delta is: "<<endl<<delta<<endl;
+		x_hat = x_hat + delta;
+		
+		mat v;
+		v = A*delta + w;
+		
+
+		//l=l+v????
+		mat temp;
+		temp = (v.t()*P*v) / (9 - 6);
+		a_post = temp(0, 0);
+		Cx = a_post*N.i();
+	}
+
 	position_ini.setX((RTFLOAT)(x_hat(0, 0)));
 	position_ini.setY((RTFLOAT)(x_hat(1, 0)));
 	position_ini.setZ((RTFLOAT)(x_hat(2, 0)));
@@ -384,6 +677,21 @@ void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettin
 	vel_error.setX((RTFLOAT)(sqrt(Cx(3, 3))));
 	vel_error.setY((RTFLOAT)(sqrt(Cx(4, 4))));
 	vel_error.setZ((RTFLOAT)(sqrt(Cx(5, 5))));
+    cout<<"final estimate is : "<<endl<<x_hat<<endl;
+	cout<<"delta time is: "<<endl<<delta_time<<endl;
+	x_hat(0,0)=x_hat(0,0)/delta_time;
+	x_hat(1,0)=x_hat(1,0)/delta_time;
+	x_hat(2,0)=x_hat(2,0)/delta_time;
+	cout<<"New final estimate is : "<<endl<<x_hat<<endl;
+	cout<<"X acceleration is in m/s2: "<<m_accel.x()<<endl;
+	cout<<"Y acceleration is in m/s2: "<<m_accel.y()<<endl;
+	cout<<"Z acceleration is in m/s2: "<<m_accel.z()<<endl;
+    cout<<"X Accel residuals is: "<<accel_resid1.x()<<endl;
+	cout<<"Y Accel residuals is: "<<accel_resid1.y()<<endl;
+	cout<<"Z Accel residuals is: "<<accel_resid1.z()<<endl;
+	cout<<"Test time is: "<<time(0)<<endl<<endl;
 
+	
+	sleep(10);
 
 }

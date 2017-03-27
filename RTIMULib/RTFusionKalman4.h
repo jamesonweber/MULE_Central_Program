@@ -52,7 +52,7 @@ public:
     void setQMatrix(RTMatrix4x4 Q) {  m_Q = Q; reset();}
     void setRkMatrix(RTMatrix4x4 Rk) { m_Rk = Rk; reset();}
 
-	void LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2);
+	void LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings);
 
 private:
     void predict();

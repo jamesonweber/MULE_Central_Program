@@ -262,7 +262,7 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
 
 }
 
-void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, const RTIMUSettings *settings2)
+void RTFusionKalman4::LSE(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings)
 {
 	// averaging out IMU data
 	RTVector3 test_accel1, test_accel2;
