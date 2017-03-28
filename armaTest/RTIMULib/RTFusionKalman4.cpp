@@ -178,8 +178,10 @@ void RTFusionKalman4::update()
 }
 
 
-void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings)
+void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, int sockfd)
 {
+    char sendBuff[1024];
+    
 	cout<<"I reset!!!" <<endl;
 	RTVector3 test_gyro1, test_gyro2, test_accel1, test_accel2, test_compass1, test_compass2;
 	if (m_enableGyro){
@@ -519,7 +521,12 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
 	cout<<"z position final is: "<<position_final.z()<<endl;
 	
 	sleep(3);
-
+    
+    char packet [256];
+    sprintf (packet, "%f,%f,%f", position_final.x(), position_final.y(), position_final.z());
+    
+    strcpy(sendBuff, packet);
+    write(sockfd, sendBuff, strlen(sendBuff));
 
 }
 
