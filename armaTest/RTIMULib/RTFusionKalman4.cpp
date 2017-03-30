@@ -178,7 +178,7 @@ void RTFusionKalman4::update()
 }
 
 
-void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, int sockfd)
+void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIMUSettings *settings, int sockfd, double gps_latitude, double gps_longitude)
 {
     char sendBuff[1024];
     
@@ -234,8 +234,8 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
 		velocity_ini.setX(0);
 		velocity_ini.setY(0);
 		velocity_ini.setZ(0);
-		position_final.setX(0);
-		position_final.setY(0);
+		position_final.setX(gps_latitude);
+		position_final.setY(gps_longitude);
 		position_final.setZ(0);
 		
 		Cl(3, 3) = 0;

@@ -34,8 +34,19 @@
 #include <arpa/inet.h>
 #include "RTIMULib.h"
 #include <iostream>
+extern "C"
+{
+#include <gps.h>
+}
 
 void getPos(int sockfd) {
+    gps_init();
+    loc_t data;
+    gps_location(&data);
+    double latitude = data.latitude;
+    double longitude = data.longitude;
+
+    
     char sendBuff[1024];
     
     int sampleCount = 0;
@@ -50,17 +61,11 @@ void getPos(int sockfd) {
     //  where <directory path> is the path to where the .ini file is to be loaded/saved
     
     RTIMUSettings *settings1 = new RTIMUSettings("RTIMULib1");
-    RTIMUSettings *settings2 = new RTIMUSettings("RTIMULib2");
     
     RTIMU *imu1 = RTIMU::createIMU(settings1);
-    RTIMU *imu2 = RTIMU::createIMU(settings2);
     
     if ((imu1 == NULL) || (imu1->IMUType() == RTIMU_TYPE_NULL)) {
         printf("No IMU1 found\n");
-        exit(1);
-    }
-    if ((imu2 == NULL) || (imu2->IMUType() == RTIMU_TYPE_NULL)) {
-        printf("No IMU2 found\n");
         exit(1);
     }
     
@@ -69,19 +74,20 @@ void getPos(int sockfd) {
     //  set up IMU
     
     imu1->IMUInit();
-    imu2->IMUInit();
     
     //  this is a convenient place to change fusion parameters
+    RTIMUSettings *settings2 = new RTIMUSettings("RTIMULib2");
     
-    imu1->setSlerpPower(0.02);
-    imu1->setGyroEnable(true);
-    imu1->setAccelEnable(true);
-    imu1->setCompassEnable(true);
+    RTIMU *imu2 = RTIMU::createIMU(settings2);
     
-    imu2->setSlerpPower(0.02);
-    imu2->setGyroEnable(true);
-    imu2->setAccelEnable(true);
-    imu2->setCompassEnable(true);
+    if ((imu2 == NULL) || (imu2->IMUType() == RTIMU_TYPE_NULL)) {
+        printf("No IMU2 found\n");
+        exit(1);
+    }
+    
+    //  set up IMU
+    
+    imu2->IMUInit();
     
     //  set up for rate timer
     
@@ -96,8 +102,10 @@ void getPos(int sockfd) {
         
         usleep(imu1->IMUGetPollInterval() * 1000);
         
-        while (imu1->IMURead()) {
+
+            imu1->IMURead();
             RTIMU_DATA imuData1 = imu1->getIMUData();
+            imu2->IMURead();
             RTIMU_DATA imuData2 = imu2->getIMUData();
             sampleCount++;
             
@@ -113,7 +121,7 @@ void getPos(int sockfd) {
                 
                 //RTVector3 accel_resid1= imu1->getAccelResiduals();
                 //RTVector3 accel_resid2= imu2->getAccelResiduals();
-                fusion->newIMUData(imuData1, imuData2, settings1, sockfd);
+                fusion->newIMUData(imuData1, imuData2, settings1, sockfd, latitude, longitude);
                 //fusion->LSE(imuData1, imuData2, accel_resid1, accel_resid2);
                 fflush(stdout);
             }
@@ -125,8 +133,6 @@ void getPos(int sockfd) {
                 sampleCount = 0;
                 rateTimer = now;
             }
-        }
-        
     }
 }
 

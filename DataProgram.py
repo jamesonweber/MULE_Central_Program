@@ -22,7 +22,7 @@
 # All required imports
 import sys
 import socket
-#import serial
+import serial
 import os
 import sys
 from datetime import datetime as dt
@@ -77,28 +77,26 @@ def main():
 
 # Function to deal with client sending information to server
 def runServer(host, port, buff):
-	global posPacket
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.bind((host, port))
 	s.listen(1)
 	print("Server Started")
 	conn, addr = s.accept()
-#	ser = serial.Serial('/dev/ttyACM0', 9600)
+	ser = serial.Serial('/dev/ttyUSB1', 9600)
 	print("Module Arduino Connected")
 	try:
 		counter = 0 
 		while 1:
-#			data = ser.readline()
-			data = "DP|MULE|DISTANCE|0x1|1|CM|6.2|1.9|"
-			data = data + str(counter) + "|100,102,101,120,100,100,100,100,100,103"
-			data = data + "|"
+			data = ser.readline().decode().strip()
+#			data = "DP|MULE|DISTANCE|0x1|1|CM|6.2|1.9|"
+#			data = data + str(counter) + "|100,102,101,120,100,100,100,100,100,103"
+#			data = data + "|"
 			data = data + posPacket.decode()
 			data = data + "|"
 			data = data + str(dt.now().strftime('%Y-%m-%d %H:%M:%S'))
 			data = data + '\n'
 			conn.sendall(data.encode('utf-8'))
 			print("Received data: " + str(data))
-			time.sleep(0.1)
 			counter = counter+1
 		conn.close()
 	except Exception as msg:
