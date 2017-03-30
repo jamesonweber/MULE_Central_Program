@@ -29,7 +29,7 @@ from datetime import datetime as dt
 import time
 import threading
 
-posPacket = ""
+posPacket = "100.0,100.0,10.0"
 
 # Multithreading class for recieving pos info
 class posThread(threading.Thread):

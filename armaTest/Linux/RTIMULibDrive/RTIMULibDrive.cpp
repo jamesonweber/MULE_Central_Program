@@ -40,14 +40,12 @@ extern "C"
 }
 
 void getPos(int sockfd) {
-    gps_init();
-    loc_t data;
-    gps_location(&data);
-    double latitude = data.latitude;
-    double longitude = data.longitude;
+    //gps_init();
+    //loc_t data;
+    //gps_location(&data);
+    double latitude = 51.0486; //data.latitude;
+    double longitude = -114.0708; //data.longitude;
 
-    
-    char sendBuff[1024];
     
     int sampleCount = 0;
     int sampleRate = 0;

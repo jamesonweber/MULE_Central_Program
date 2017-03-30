@@ -25,6 +25,7 @@
 #include "RTFusionKalman4.h"
 #include "RTIMUSettings.h"
 #include "../Linux/include/armadillo"
+#include <cmath>
 
 using namespace std;
 using namespace arma;
@@ -35,6 +36,8 @@ using namespace arma;
 
 //  The RVALUE controls the influence of the accels and compass.
 //  The bigger the value, the more sluggish the response.
+
+#define PI 3.141592653589793
 
 #define KALMAN_RVALUE	0.0005f
 
@@ -182,7 +185,44 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
 {
     char sendBuff[1024];
     
-	cout<<"I reset!!!" <<endl;
+	
+	
+	double N0, E0, a, f, lat, lon, lon0, k0, n, A, n2, n3, n4, n5, n6, e, tau, sigma, tau_prime, eta_prime, zeta_prime, zeta, eta, alpha1, alpha2, alpha3, alpha4, alpha5, alpha6, E, N;
+	lat = gps_latitude;
+	lon = gps_longitude;
+	
+	N0 = 0; //m
+	E0 = 500000; //m
+	f = 298.257223563; // 1 / f
+	f = 1 / f;
+	lat = lat*PI / 180;
+	lon0 = (10 * 6 - 180 + 3)*PI / 180;
+	lon = lon*PI / 180 - lon0;
+	k0 = 0.9996;
+
+	e = sqrt(f*(2 - f));
+	tau = tan(lat);
+	sigma = sinh(e*atanh(e*tau / sqrt(1 + tau*tau)));
+	tau_prime = tau*sqrt(1 + sigma*sigma) - sigma*sqrt(1 + tau*tau);
+	zeta_prime = atan2(tau_prime, cos(lon));
+	eta_prime = asinh(sin(lon) / sqrt(tau_prime*tau_prime + cos(lon)*cos(lon)));
+	zeta = atan2(tau_prime, cos(lon));
+	eta = asinh(sin(lon) / sqrt(tau_prime*tau_prime + cos(lon)*cos(lon)));
+	A = 6367449.145823415;
+	alpha1 = 8.377318206244698e-04;
+	alpha2 = 7.608527773572307e-07;
+	alpha3 = 1.197645503329453e-09;
+	alpha4 = 2.429170607201359e-12;
+	alpha5 = 5.711757677865804e-15;
+	alpha6 = 1.491117731258390e-17;
+
+	zeta = zeta_prime + alpha1*sin(2 * 1 * zeta_prime)*cosh(2 * 1 * eta_prime) + alpha2*sin(2 * 2 * zeta_prime)*cosh(2 * 2 * eta_prime) + alpha3*sin(2 * 3 * zeta_prime)*cosh(2 * 3 * eta_prime) + alpha4*sin(2 * 4 * zeta_prime)*cosh(2 * 4 * eta_prime) + alpha5*sin(2 * 5 * zeta_prime)*cosh(2 * 5 * eta_prime) + alpha6*sin(2 * 6 * zeta_prime)*cosh(2 * 6 * eta_prime);
+	eta = eta_prime + alpha1*cos(2 * 1 * zeta_prime)*sinh(2 * 1 * eta_prime) + alpha2*cos(2 * 2 * zeta_prime)*sinh(2 * 2 * eta_prime) + alpha3*cos(2 * 3 * zeta_prime)*sinh(2 * 3 * eta_prime) + alpha4*cos(2 * 4 * zeta_prime)*sinh(2 * 4 * eta_prime) + alpha5*cos(2 * 5 * zeta_prime)*sinh(2 * 5 * eta_prime) + alpha6*cos(2 * 6 * zeta_prime)*sinh(2 * 6 * eta_prime);
+	E = E0 + k0*A*eta;
+	N = N0 + k0*A*zeta;
+	
+	
+	
 	RTVector3 test_gyro1, test_gyro2, test_accel1, test_accel2, test_compass1, test_compass2;
 	if (m_enableGyro){
 		test_gyro1 = data.gyro;
@@ -234,8 +274,8 @@ void RTFusionKalman4::newIMUData(RTIMU_DATA& data, RTIMU_DATA& data2, const RTIM
 		velocity_ini.setX(0);
 		velocity_ini.setY(0);
 		velocity_ini.setZ(0);
-		position_final.setX(gps_latitude);
-		position_final.setY(gps_longitude);
+		position_final.setX(N);
+		position_final.setY(E);
 		position_final.setZ(0);
 		
 		Cl(3, 3) = 0;
